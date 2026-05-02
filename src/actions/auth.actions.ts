@@ -1,0 +1,270 @@
+"use client";
+
+import type {
+  ForgotPasswordFormData,
+  ResetPasswordFormData,
+  SignInFormData,
+  SignUpFormData,
+} from "@/types/auth.types";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createClient } from "./supabase/client";
+
+/**
+ * Hook regroupant toutes les actions d'authentification.
+ * Gère les erreurs et les redirections avec Supabase.
+ */
+export function useAuth() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  /**
+   * Connexion avec email + mot de passe
+   */
+  async function handleSignIn(data: SignInFormData): Promise<void> {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      console.log(error?.message + " " + error?.code);
+      if (error?.code === "invalid_credentials") {
+        toast.error("Email ou mot de passe incorrect");
+      } else {
+        toast.success("Connexion réussie !");
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur de connexion";
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Inscription avec email + mot de passe
+   */
+  async function handleSignUp(data: SignUpFormData): Promise<boolean> {
+    try {
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.name,
+          },
+        },
+      });
+      console.log("Data : ", authData.user?.identities);
+      // if (error) {
+      //   if (error.message.includes("User already registered")) {
+      //     throw new Error("Un compte existe déjà avec cet email");
+      //   }
+      //   throw error;
+      // }
+      if (authData.user?.identities?.length === 0) {
+        toast.warning("Un compte existe déjà avec cet email");
+        return false;
+      } else {
+        toast.success("Votre compte a été crée avec succès");
+        return true;
+      }
+
+      // // Supabase renvoie une session vide si la vérification de l'email est requise
+      // if (authData.user && !authData.session) {
+      //   toast.success("Un code de vérification a été envoyé à votre email !");
+      //   return true; // Passe à l'étape de vérification
+      // }
+
+      // toast.success("Compte créé avec succès !");
+      // router.push("/dashboard");
+      return false;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur d'inscription";
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Vérification de l'email avec le code OTP
+   */
+  async function handleVerifyEmail(email: string, code: string): Promise<void> {
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: "signup",
+      });
+
+      if (error) {
+        if (error.message.includes("Token has expired or is invalid")) {
+          throw new Error("Code de vérification invalide ou expiré");
+        }
+        throw error;
+      }
+
+      toast.success("Compte vérifié avec succès !");
+      router.push("/dashboard");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur de vérification";
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Connexion via Google OAuth
+   */
+  async function handleGoogleSignIn(): Promise<void> {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) throw error;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erreur avec Google";
+      toast.error(message);
+    }
+  }
+
+  /**
+   * Demande de réinitialisation du mot de passe (envoie l'email)
+   */
+  async function handleForgotPassword(
+    data: ForgotPasswordFormData,
+  ): Promise<void> {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast.success("Email de réinitialisation envoyé !");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de l'envoi";
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Vérification du code + nouveau mot de passe
+   */
+  async function handleResetPassword(
+    data: ResetPasswordFormData,
+  ): Promise<void> {
+    try {
+      // 1. Mettre à jour le mot de passe
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: data.newPassword,
+      });
+
+      if (updateError) throw updateError;
+      await supabase.auth.signOut();
+      window.location.href = "/signin";
+      toast.success("Mot de passe réinitialisé avec succès !");
+      router.push("/signin");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur de réinitialisation";
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Déconnexion
+   */
+  async function handleSignOut(): Promise<void> {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      toast.success("Déconnecté avec succès");
+      router.push("/signin");
+    } catch {
+      toast.error("Erreur lors de la déconnexion");
+    }
+  }
+
+  /**
+   * Vérification du temps de validité
+   */
+  function isLinkStillValid(
+    sentAt: string | null,
+    expirationMinutes: number = 60,
+  ): boolean {
+    if (!sentAt) return false;
+
+    const now = new Date().getTime();
+    const sentTime = new Date(sentAt).getTime();
+
+    const diffMinutes = (now - sentTime) / (1000 * 60);
+
+    return diffMinutes <= expirationMinutes;
+  }
+  async function handleIsLinkStillValid(): Promise<boolean> {
+    try {
+      const {
+        error,
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (error) throw error;
+
+      if (!isLinkStillValid(user?.email_confirmed_at as string)) {
+        toast.warning(
+          "Votre email n'est pas encore confirmé, veuillez renvoyer un autre lien de confirmation",
+        );
+        return false;
+      }
+      return true;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de la vérification";
+      toast.error(message);
+      return false;
+    }
+  }
+
+  async function resendConfirmationEmail({
+    email,
+  }: {
+    email: string;
+  }): Promise<void> {
+    try {
+      const { error } = await supabase.auth.resend({
+        email: email,
+        type: "signup",
+      });
+
+      if (error) throw error;
+
+      toast.success("Email de confirmation renvoyé avec succès !");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors du renvoi";
+      toast.error(message);
+    }
+  }
+
+  return {
+    handleSignIn,
+    handleSignUp,
+    handleVerifyEmail,
+    handleGoogleSignIn,
+    handleForgotPassword,
+    handleResetPassword,
+    handleSignOut,
+    handleIsLinkStillValid,
+    resendConfirmationEmail,
+  };
+}
