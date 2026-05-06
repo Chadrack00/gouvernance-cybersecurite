@@ -129,7 +129,7 @@ export function ForgotPasswordForm() {
               Envoi en cours...
             </>
           ) : (
-            "Envoyer le code"
+            "Envoyer le lien"
           )}
         </Button>
 

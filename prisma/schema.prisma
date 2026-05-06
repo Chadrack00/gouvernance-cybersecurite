@@ -10,6 +10,102 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
 
+enum Role {
+  USER
+  ANALYST
+  OPERATOR
+  ADMIN
+}
+
+enum Status {
+  PENDING
+  VALID
+  REJECTED
+  BANNED
+  SUSPENDED
+}
+
+model Profile {
+  id_profile   String   @id @default(uuid())
+  speciality   String?
+  photo        String?
+  adresse      String?
+  phone        String
+  role         Role     @default(USER)
+  status       Status?  @default(PENDING)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  chat Chat[]
+  server Server[]
+  @@map("profiles")
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  message   String   @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  sender_id String
+  profile Profile @relation(fields: [sender_id], references: [id_profile])
+  @@map("chats")
+}
+
+enum Status_Server {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+model Server {
+  id_serveur   String   @id @default(uuid())
+  name         String
+  type  String
+  ip_adresse   String   @db.Inet
+  description  String?
+  status       Status_Server @default(ACTIVE)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  id_profile String
+  profile Profile @relation(fields: [id_profile], references: [id_profile])
+  @@map("servers")
+}
+
+enum Status_Attaque {
+  SUCCESSFUL
+  FAILED
+}
+
+model Attaque {
+  id_attaque String @id @default(uuid())
+  type String
+  data Json
+  status Status_Attaque? 
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("attaques")
+}
+
+model Log {
+  id_log  String @id @default(uuid())
+  content Json
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("logs")
+}
+
+model Notification {
+  id_notification String @id @default(uuid())
+  title String
+  content String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("notifications")
+}

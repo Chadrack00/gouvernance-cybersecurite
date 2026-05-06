@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
+import { TooltipProvider } from "@/components/ui/tooltip"
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gouvernance Cyber",
-  description: "Plateforme de gouvernance cybersécurité",
+  title: {
+    template: '%s | Gouvernance',
+    default: 'Gouvernance',
+  },
+  description: "Plateforme de gouvernance Cybersécurité",
 };
 
 export default function RootLayout({
@@ -14,8 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        {children}
+      <body className="min-h-full flex flex-col p-3">
+         <TooltipProvider>
+          {children}
+        </TooltipProvider>
         <Toaster position="top-center" richColors />
       </body>
     </html>

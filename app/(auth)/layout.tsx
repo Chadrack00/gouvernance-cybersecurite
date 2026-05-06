@@ -64,7 +64,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* ── Footer ── */}
       <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
-        © {new Date().getFullYear()} Gouvernance Cybersécurité · Sécurité &
+        © 2026 Gouvernance Cybersécurité · Sécurité &
         Conformité
       </p>
 

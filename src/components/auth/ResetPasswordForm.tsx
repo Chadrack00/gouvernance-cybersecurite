@@ -60,7 +60,7 @@ export function ResetPasswordForm() {
           Nouveau mot de passe
         </CardTitle>
         <CardDescription className="text-center">
-          Entrez le code reçu par email et choisissez un nouveau mot de passe
+          Choisissez un nouveau mot de passe pour votre compte
         </CardDescription>
       </CardHeader>
 
