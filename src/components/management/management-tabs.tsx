@@ -51,7 +51,7 @@ export default function ManagementTabs({ initialServers, initialLogs, initialAtt
       </TabsContent>
 
       <TabsContent value="attacks">
-        <AttackSection attacks={initialAttacks} role={role} />
+        <AttackSection attacks={initialAttacks} role={role} servers={initialServers} />
       </TabsContent>
 
       <TabsContent value="overview">
@@ -327,7 +327,7 @@ function LogSection({ logs, role }: { logs: LogItem[], role: string | null }) {
   )
 }
 
-function AttackSection({ attacks, role }: { attacks: AttackItem[], role: string | null }) {
+function AttackSection({ attacks, role, servers }: { attacks: AttackItem[], role: string | null, servers: ServerItem[] }) {
   const canModify = role === "ADMIN" || role === "ANALYST"
   const router = useRouter()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -342,6 +342,7 @@ function AttackSection({ attacks, role }: { attacks: AttackItem[], role: string 
       await createAttack({
         type: formData.get("type") as string,
         status: formData.get("status") as string,
+        id_server: formData.get("id_server") as string,
         data: JSON.parse(formData.get("data") as string),
       })
       toast.success("Attaque enregistrée")
@@ -399,6 +400,21 @@ function AttackSection({ attacks, role }: { attacks: AttackItem[], role: string 
                     <SelectContent>
                       <SelectItem value="SUCCESSFUL">Réussie</SelectItem>
                       <SelectItem value="FAILED">Échouée</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                 <div className="space-y-2">
+                  <label className="text-sm font-medium">Serveur cible</label>
+                  <Select name="id_server" required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner le serveur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {servers.map((server) => (
+                        <SelectItem key={server.id_serveur} value={server.id_serveur}>
+                          {server.name} ({server.ip_adresse})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

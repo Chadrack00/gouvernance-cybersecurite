@@ -71,6 +71,8 @@ model Server {
 
   id_profile String
   profile Profile @relation(fields: [id_profile], references: [id_profile])
+  attaques Attaque[]
+
   @@map("servers")
 }
 
@@ -86,6 +88,9 @@ model Attaque {
   status Status_Attaque? 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  id_server String
+  server     Server   @relation(fields: [id_server], references: [id_serveur])
 
   @@map("attaques")
 }

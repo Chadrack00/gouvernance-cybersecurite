@@ -146,7 +146,7 @@ export async function getManagementAttacks(): Promise<AttackItem[]> {
   return (data as AttackItem[]) || []
 }
 
-export async function createAttack(data: { type: string; data: Record<string, unknown>; status: string }) {
+export async function createAttack(data: { type: string; data: Record<string, unknown>; status: string; id_server: string }) {
   const role = await getCurrentUserRole()
   if (role !== "ADMIN" && role !== "ANALYST") throw new Error("Unauthorized")
 
@@ -181,10 +181,18 @@ export async function simulateAttack() {
   const type = attackTypes[Math.floor(Math.random() * attackTypes.length)]
   const status = Math.random() > 0.7 ? "SUCCESSFUL" : "FAILED"
 
-  // 2. Create the attack
+  // 2. Pick a random server to target
+  const { data: servers } = await supabase.from("servers").select("id_serveur")
+  if (!servers || servers.length === 0) {
+    throw new Error("No servers available to attack")
+  }
+  const targetServer = servers[Math.floor(Math.random() * servers.length)]
+
+  // 3. Create the attack
   const { data: attack, error: attackError } = await supabase.from("attaques").insert({
     type,
     status,
+    id_server: targetServer.id_serveur,
     data: {
       origin_ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
       target_layer: "Application",
@@ -194,7 +202,7 @@ export async function simulateAttack() {
 
   if (attackError) throw attackError
 
-  // 3. Create logs
+  // 4. Create logs
   const logEvents = [
     { content: { event: "Network Scan Detected", source: "External", severity: "INFO" } },
     { content: { event: "Firewall Rule Triggered", rule_id: "FW-99", action: "BLOCK" } },
@@ -202,13 +210,9 @@ export async function simulateAttack() {
   ]
   await supabase.from("logs").insert(logEvents)
 
-  // 4. Randomly disrupt a server if attack was successful
+  // 5. Randomly disrupt the target server if attack was successful
   if (status === "SUCCESSFUL") {
-    const { data: servers } = await supabase.from("servers").select("id_serveur")
-    if (servers && servers.length > 0) {
-      const targetServer = servers[Math.floor(Math.random() * servers.length)]
-      await supabase.from("servers").update({ status: "INACTIVE" }).eq("id_serveur", targetServer.id_serveur)
-    }
+    await supabase.from("servers").update({ status: "INACTIVE" }).eq("id_serveur", targetServer.id_serveur)
   }
 
   // 5. Broadcast signal
