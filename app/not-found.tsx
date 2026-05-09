@@ -42,7 +42,6 @@ export default function NotFound() {
           >
             Retour à l&apos;accueil
           </Link>
-
         </div>
 
         {/* Image */}

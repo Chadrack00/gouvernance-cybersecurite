@@ -18,10 +18,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ChevronsUpDownIcon, LogOutIcon, UserIcon } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function NavUser({
-  user,
+  user: initialUser,
 }: {
   user: {
     name: string;
@@ -32,6 +33,44 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
   const supabase = createClient();
+  const [user, setUser] = useState(initialUser);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (authUser) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("photo")
+          .eq("id_user", authUser.id)
+          .single();
+
+        let avatarUrl = initialUser.avatar;
+        if (profile?.photo) {
+          const { data: publicUrl } = supabase.storage
+            .from("profile")
+            .getPublicUrl(profile.photo);
+          avatarUrl = publicUrl.publicUrl;
+        }
+
+        setUser({
+          name: authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "Utilisateur",
+          email: authUser.email || "",
+          avatar: avatarUrl,
+        });
+      }
+    }
+
+    fetchUser();
+  }, [supabase, initialUser.avatar]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/signin");
+  };
 
   return (
     <SidebarMenu>
@@ -44,7 +83,9 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {user.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -63,7 +104,9 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -84,14 +127,10 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={async () => {
-                console.log("Log out");
-                await supabase.auth.signOut();
-                redirect("/signin");
-              }}
+              onClick={handleSignOut}
               className="text-red-500 hover:bg-red-500/70 hover:text-red-500"
             >
-              <LogOutIcon color="red"/>
+              <LogOutIcon color="red" />
               Se deconnecter
             </DropdownMenuItem>
           </DropdownMenuContent>

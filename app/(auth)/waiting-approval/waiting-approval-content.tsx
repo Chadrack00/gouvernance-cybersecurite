@@ -1,10 +1,10 @@
 "use client";
 
-import { createClient  } from "@/actions/supabase/client";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { createClient } from "@/actions/supabase/client";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 const STATUS_CONFIG: Record<
   string,

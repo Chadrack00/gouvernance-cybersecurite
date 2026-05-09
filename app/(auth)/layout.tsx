@@ -1,5 +1,13 @@
 import { Toaster } from "@/components/ui/sonner";
+import { Metadata } from "next";
 import type { ReactNode } from "react";
+export const metadata: Metadata = {
+  title: {
+    template: "%s | Gouvernance",
+    default: "Gouvernance",
+  },
+  description: "Plateforme de gouvernance Cybersécurité",
+};
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -64,8 +72,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* ── Footer ── */}
       <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-muted-foreground whitespace-nowrap">
-        © 2026 Gouvernance Cybersécurité · Sécurité &
-        Conformité
+        © 2026 Gouvernance Cybersécurité · Sécurité & Conformité
       </p>
 
       <Toaster position="top-right" richColors />

@@ -310,6 +310,18 @@ export function useAuth() {
       // Supabase PostgREST errors expose .message and .details
       throw new Error(insertError.message ?? "Échec de la création du profil");
     }
+
+    // Broadcast signal to admin
+    const channel = supabase.channel("admin-notifications")
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        channel.send({
+          type: "broadcast",
+          event: "new-profile",
+          payload: { message: "Nouveau compte complété" }
+        })
+      }
+    })
   }
 
   return {

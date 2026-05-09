@@ -28,9 +28,9 @@ import {
 // This is sample data.
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Chargement...",
+    email: "",
+    avatar: "",
   },
   teams: [
     {
@@ -52,26 +52,25 @@ const data = {
   navMain: [
     {
       title: "Home",
-      url: "#",
+      url: "/dashboard",
       icon: <TerminalSquareIcon />,
-      isActive: true,
       
     },
     {
       title: "Managment des serveurs",
-      url: "#",
+      url: "/dashboard/management",
       icon: <BotIcon />,
      
     },
     {
       title: "Rapport et statistique",
-      url: "#",
+      url: "/dashboard/statistique",
       icon: <BookOpenIcon />,
       
     },
     {
       title: "Gestion des comptes",
-      url: "#",
+      url: "/dashboard/accounts",
       icon: <Settings2Icon />,
      
     },
@@ -79,26 +78,33 @@ const data = {
   projects: [
     {
       name: "Notifications",
-      url: "#",
+      url: "/dashboard/notifications",
       icon: <BellIcon />,
     },
     {
       name: "Chat",
-      url: "#",
+      url: "/dashboard/chat",
       icon: <MessageCircle />,
     }
   ],
   
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ role, ...props }: React.ComponentProps<typeof Sidebar> & { role?: string | null }) {
+  const filteredNavMain = data.navMain.filter(item => {
+    if (item.url === "/dashboard/accounts") {
+      return role === "ADMIN"
+    }
+    return true
+  })
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavMain} />
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
