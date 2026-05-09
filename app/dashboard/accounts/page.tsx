@@ -17,7 +17,9 @@ export default async function AccountsPage() {
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Gestion des Comptes</h2>
-        <AttackSimulator />
+        <Suspense fallback={<Skeleton className="h-10 w-44" />}>
+          <AttackSimulator />
+        </Suspense>
       </div>
       <Suspense fallback={<AccountsSkeleton />}>
         <AccountsContent />

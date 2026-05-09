@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { AppSidebar } from "@/components/app-sidebar"
 import { ModeToggle } from "@/components/toggle-mode-button";
 import { NotificationBell } from "@/components/dashboard/notification-bell";

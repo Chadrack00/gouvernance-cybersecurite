@@ -1,8 +1,8 @@
-import ServerUi, { typeServer } from "@/components/dashbaord/server-ui";
+import DashboardCharts from "@/components/dashboard/dashboard-charts";
+import ServerUi, { typeServer } from "@/components/dashboard/server-ui";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import DashboardCharts from "@/components/dashbaord/dashboard-charts";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import { getServers } from "@/actions/dashboard.actions";
 
